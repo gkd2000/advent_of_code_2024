@@ -1,3 +1,8 @@
 *.o
 *.txt
 app
+test.c
+*.out
+test
+clever
+bruteforce

@@ -8,7 +8,7 @@
 #define NUM_COLUMNS 140
 #define NUM_DIRECTIONS 8
 char WordGrid[NUM_ROWS][NUM_COLUMNS];
-char Directions[NUM_DIRECTIONS][2] = 
+char Directions[NUM_DIRECTIONS][2] =
 {
     {-1,  0}, /* North     */
     {-1,  1}, /* NorthEast */

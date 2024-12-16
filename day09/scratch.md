@@ -1,0 +1,2 @@
+- maintain a linked list of free space pointers
+- when we encounter memory we would like to move, iterate through the free space pointers. if we can fill it in, then do so and update the total accordingly

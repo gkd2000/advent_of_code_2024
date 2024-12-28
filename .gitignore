@@ -6,4 +6,8 @@ test.c
 test
 clever
 bruteforce
-settings.json
+*.json
+Info.plist
+counter
+helper
+printer

@@ -12,7 +12,8 @@ typedef struct freeSpaceNode_s
 } freeSpaceNode_t;
 
 freeSpaceNode_t *createFreeList(char *diskDesc, int len);
-long long moveBlockIfPossible(freeSpaceNode_t *head, int sizeToMove, long long id);
+long long moveBlockIfPossible(freeSpaceNode_t *head, int sizeToMove,
+                              long long id, long long currentIdxInDefrag);
 
 int main (int argc, char **argv)
 {
@@ -36,77 +37,16 @@ int main (int argc, char **argv)
     char *line = NULL;
     size_t len = 0;
     int inputSize = getline(&line, &len, filePointer);
-    // int idsSeen[10000] = {0};
 
     long long totalSize = 0;
     for (int i = 0; i < inputSize - 1; i++)
     {
-        // printf("%d", (line[i] - '0'));
         totalSize += (line[i] - '0');
     }
-    printf("totalSize: %lld\n", totalSize);
-    // int *hardDrive = malloc(totalSize * sizeof(int));
-    // int hardDriveIdx = 0;
-    // bool freeSpace = false;
-    // int id = 0;
-    // for (int i = 0; i < totalSize; i++)
-    // {
-    //     for (int j = 0; j < (line[i] - '0'); j++)
-    //     {
-    //         if (freeSpace)
-    //         {
-    //             hardDrive[hardDriveIdx] = -1;
-    //         }
-    //         else
-    //         {
-    //             hardDrive[hardDriveIdx] = id;
-    //         }
-    //         hardDriveIdx++;
-    //     }
-    //     if (freeSpace)
-    //     {
-    //         id++;
-    //     }
-    //     freeSpace = !freeSpace;
-    // }
-
-    // int freeSpaceIdx = 0;
-    // int endIdx = totalSize - 1;
-    // while (freeSpaceIdx  < endIdx)
-    // {
-    //     /* Advance freeSpaceIdx so it's pointing at free space */
-    //     while (hardDrive[freeSpaceIdx] != -1)
-    //     {
-    //         freeSpaceIdx++;
-    //     }
-    //     /* Move back endIdx so it's pointing at data */
-    //     while (hardDrive[endIdx] == -1)
-    //     {
-    //         endIdx--;
-    //     }
-
-    //     /* Fill free space from the end */
-    //     if (freeSpaceIdx < endIdx)
-    //     {
-    //         hardDrive[freeSpaceIdx] = hardDrive[endIdx];
-    //         hardDrive[endIdx] = -1;
-    //         freeSpaceIdx++;
-    //         endIdx--;
-    //     }
-    // }
-
-    // long long total = 0;
-    // for (int i = 0; i < totalSize && hardDrive[i] != -1; i++)
-    // {
-    //     // printf("%d ", hardDrive[i]);
-    //     total += i * hardDrive[i];
-    // }
-    // printf("\ntotal: %lld\n", total);
 
     char *startPtr = line;
     char *endPtr = line + (inputSize - 2); /* Skip over the null terminator and newline char */
 
-    // printf("len: %d, %c %c\n", inputSize, *startPtr, *endPtr);
     long long total = 0;
     int numBlocks = 0;
     bool fillingEmptySpace = false;
@@ -133,8 +73,6 @@ int main (int argc, char **argv)
                     total += currentEndId * currentPosInDefrag;
                     currentEndPtrBlocks--;
                     currentPosInDefrag++;
-                    // printf("%d ", currentEndId);
-                    // idsSeen[currentEndId] += 1;
                 }
                 else
                 {
@@ -149,8 +87,6 @@ int main (int argc, char **argv)
             {
                 total += currentStartId * currentPosInDefrag;
                 currentPosInDefrag++;
-                // printf("%d ", currentStartId);
-                // idsSeen[currentStartId] += 1;
             }
             currentStartId++;
         }
@@ -163,21 +99,11 @@ int main (int argc, char **argv)
         total += currentEndId * currentPosInDefrag;
         currentEndPtrBlocks--;
         currentPosInDefrag++;
-        // idsSeen[currentEndId] += 1;
-        // printf("%d ", currentEndId);
     }
 
-    // printf("currentEndPtrBlocks %d\n", currentEndPtrBlocks);
-    printf("total is %lld\n", total);
+    printf("total for part 1 is %lld\n", total);
 
     freeSpaceNode_t *freeListHead = createFreeList(line, inputSize - 1);
-    freeSpaceNode_t *iterator = freeListHead;
-
-    // while (iterator != NULL)
-    // {
-    //     printf("size %d, startIdx %d\n", iterator->size, iterator->startIdxInDefrag);
-    //     iterator = iterator->next;
-    // }
 
     endPtr = line + (inputSize - 2);
     long long currentId = (inputSize - 2) / 2;
@@ -187,12 +113,12 @@ int main (int argc, char **argv)
     bool pointingAtOccupiedBlock = true;
     while (endPtr >= line)
     {
-        // printf("endPtr is pointing at %c, id is %d\n", *endPtr, currentId);
         if (pointingAtOccupiedBlock)
         {
             /* Iterate over the free list to see if we can move this block */
             movedContributions = moveBlockIfPossible(freeListHead,
-                                                     *endPtr - '0', currentId);
+                                                     *endPtr - '0', currentId,
+                                                     endPtrPosInDefrag);
             if (movedContributions == 0)
             {
                 /*
@@ -202,22 +128,15 @@ int main (int argc, char **argv)
                 long long saved = totalPart2;
                 for (long long i = *endPtr - '0'; i > 0; i--)
                 {
-                    printf("  multiplying %lld * %lld\n", currentId, endPtrPosInDefrag - i);
                     totalPart2 += (long long) currentId * (endPtrPosInDefrag - i);
                 }
-                printf("couldn't move id %lld, contributed %lld\n", currentId,
-                       totalPart2 - saved);
 
             }
             else
             {
-                printf("moved id %lld, movedContributions are %lld\n",
-                       currentId, movedContributions);
                 totalPart2 += movedContributions;
             }
             currentId--;
-
-            printf("total so far: %lld\n", totalPart2);
         }
         pointingAtOccupiedBlock = !pointingAtOccupiedBlock;
         endPtrPosInDefrag -= (*endPtr - '0');
@@ -225,75 +144,27 @@ int main (int argc, char **argv)
     }
 
     printf("total for part 2 is %lld\n", totalPart2);
-    // int totalSize = 0;
-    // for (int i = 0; i < inputSize - 1; i++)
-    // {
-    //     totalSize += (line[i] - '0');
-    // }
-    // printf("totalSize: %d\n", totalSize);
-
-/*
-    int *hardDrive = malloc(totalSize * sizeof(int));
-    int hardDriveIdx = 0;
-    bool freeSpace = false;
-    int id = 0;
-    for (int i = 0; i < totalSize; i++)
-    {
-        for (int j = 0; j < (line[i] - '0'); j++)
-        {
-            if (freeSpace)
-            {
-                hardDrive[hardDriveIdx] = -1;
-            }
-            else
-            {
-                hardDrive[hardDriveIdx] = id;
-            }
-            hardDriveIdx++;
-        }
-        if (freeSpace)
-        {
-            id++;
-        }
-        freeSpace = !freeSpace;
-    }
-
-    *startPtr = line + 1;
-    *endPtr = line + (inputSize - 2);
-    int blocksToMove = 0;
-    int freeBlocks = 0;
-    int hardDriveIdx = *line;
-    // int lastCountIdx = 0;
-    while (endPtr >= 0)
-    {
-        blocksToMove = (*endPtr) - '0';
-        startPtr = line + 1;
-        while (startPtr < endPtr)
-        {
-            freeBlocks = (*startPtr) - '0';
-            if (freeBlocks >= blocksToMove)
-            {
-                for (int i = 0; i < blocksToMove; i++)
-                {
-                    hardDrive[hardDriveIdx]
-                }
-            }
-        }
-    }
-*/
 }
 
-long long moveBlockIfPossible(freeSpaceNode_t *head, int sizeToMove, long long id)
+long long moveBlockIfPossible(freeSpaceNode_t *head, int sizeToMove,
+                              long long id, long long currentIdxInDefrag)
 {
     long long retVal = 0;
+    long ctr = 0;
     while (head != NULL && head->size < sizeToMove)
     {
         head = head->next;
+        ctr++;
     }
-    if (head != NULL)
+
+    /*
+     * Make sure that if we found a freelist node, it was before the index
+     * currently occupied by this block.
+     */
+    if (head != NULL && head->startIdxInDefrag < currentIdxInDefrag)
     {
         /* head points at the first freelist node that had enough space */
-        for (int idx = head->startIdxInDefrag;
+        for (long long idx = head->startIdxInDefrag;
              idx < head->startIdxInDefrag + sizeToMove; idx++)
         {
             retVal += idx * id;
@@ -314,6 +185,10 @@ freeSpaceNode_t *createFreeList(char *diskDesc, int len)
         if (i % 2 == 1 && diskDesc[i] != '0')
         {
             freeSpaceNode_t *newNode = malloc(sizeof(freeSpaceNode_t));
+            if (newNode == NULL)
+            {
+                printf("malloc failure!\n");
+            }
             if (i == 1)
             {
                 head = newNode;
@@ -321,7 +196,10 @@ freeSpaceNode_t *createFreeList(char *diskDesc, int len)
             newNode->size = diskDesc[i] - '0';
             newNode->startIdxInDefrag = curPosInDefrag;
             newNode->next = NULL;
-            previous->next = newNode;
+            if (previous != NULL)
+            {
+                previous->next = newNode;
+            }
             previous = newNode;
         }
         curPosInDefrag += diskDesc[i] - '0';

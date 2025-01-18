@@ -52,7 +52,7 @@ int main (int argc, char **argv)
         return 0;
     }
 
-    /* Read the input file into the PlotGrid matrix */
+    /* Read the input file and process codes one at a time */
     char *line = NULL;
     size_t maxLen = 0;
     int currentIteration = 0;
